@@ -95,7 +95,7 @@ Ok, so now we want to create a profile every time a new user is created. We'll d
 2. Click 'Create Function', and choose Node 8.10, I named it (unsurprisingly) serverless_user_created
 3. Under Role, choose 'use an existing role', and then the role we just created, 'lambda_db_role', or whatever you called it.
 4. Create the function
-5. Copy the contents of aws/lambda/serverless_user_created.js into the function and save it.
+5. Copy the contents of aws/lambda/serverless_user_created.js into the function and save it. (Make sure the table name in the code is the one you chose)
 
 ### Cognito 
 
@@ -106,5 +106,44 @@ Ok, so now we want to create a profile every time a new user is created. We'll d
 ### DynamoDB
 
 1. Go back to our app and sign up again, but this time navigate to DynamoDB in the AWS console ('Services' -> 'DynamoDB') and open out table
-2. Click the 'Items' tab are you should see our brand new profile!.
+2. Click the 'Items' tab are you should see our brand new profile!
 
+
+
+Ok, so look for far we've come. We have a database, we're creating and managing users, and we're creating their profile. All that's left is the rest of the operations on the database object, like update and delete. In order to do that we need an api. Our API (API Gateway) will listen for our API calls and will send on the request to Lambda, which will perform the operation on DynamoDB and return the result, back through API gateway, to our client.
+
+
+
+
+
+Ok, we're going to need another Lambda function that interacts with DynamoDB, we're going to use one function for all of the methods on this endpoint.
+
+### Lambda
+
+1. In the AWS Console, go to 'Services' and 'Lambda'
+2. Click 'Create Function'
+3. Choose 'Blueprints'
+4. Search the blueprints for 'simple-mobile-backend' and select it, then 'configure'
+5. Name it 'vue-serverless-endpoint-manager', and I chose the 'lambda_db_role' from earlier as the role.
+6. Click 'Create Function' and then replace the code with the code in aws/lambda/vue-serverless-endpoint-manager.js (Remember to change the table name if you've chosen your own)
+
+### API Gateway
+
+1. Go to 'Services' and 'API Gateway'
+2. Create a new API
+3. I called mine vue-serverless-api, don't change any other settings and click 'Create API'
+4. Ok, we firstly need a get endpoint so return the profile of a given user
+5. Click Actions -> Create Resource
+6. Name your resource 'profile' and check the 'Enable API Gateway CORS' box, then 'create resource'
+7. Click the new '/profile' resource, and then in the action menu, select 'Create Method'. In the row that appears, choose GET and click the tick to create it
+8. Once created, set the integration type to 'Lambda Function' and from the dropdown select 'vue-serverless-endpoint-manager'
+9. Save
+10. Now, in your GET request click on the 'Integration request' -> and 'Mapping Templates'
+11. Select 'When there are no templates defined (recommended)' and 'Add Mapping Template'
+12. Call it 'application/json' (Don't change this) and in the box that appears below copy the code from aws/APIGateway/Get-Integration-Request-Mapping-Template.json
+13. Go back to the GET method and this time select 'Integration Response' andexpand the arrow, then click 'Mapping Templates'
+14. Click 'Add Mapping Template', Call it 'application/json' (Don't change this) and in the box that appears below copy the code from aws/APIGateway/Get-Integration-Response-Mapping-Template.json
+
+
+
+Ok, so this is really close, but it's missing one key element. We need to make sure the user requesting the profile is the user who owns the profile. In order to do this we need to create a custom authoriser in Lambda that will decode the token sent from the client and make sure that everything's ok.

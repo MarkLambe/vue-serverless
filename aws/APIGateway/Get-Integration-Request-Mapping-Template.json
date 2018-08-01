@@ -1,0 +1,7 @@
+#set($inputRoot = $input.path('$'))
+{
+    "operation": "read",
+    "key": {
+        "user_id" : "$context.authorizer.principalId"
+    }
+}

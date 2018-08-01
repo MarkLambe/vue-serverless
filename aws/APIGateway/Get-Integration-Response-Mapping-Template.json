@@ -1,0 +1,16 @@
+#set($inputRoot = $input.path('$'))
+{
+    "user_id": "$context.authorizer.principalId",
+    "profile": {
+        "signup_date": $inputRoot.Item.cv.signup_date,
+        "notes": [
+            #foreach($note in $inputRoot.Item.profile.notes)
+            {
+                "created_date": $note.created_date,
+                "text": $note.text
+            }
+            #if($foreach.hasNext),#end
+            #end
+        ]
+    }
+}
